@@ -34,15 +34,15 @@ include { merge_lanes } from "./modules/process/preprocessing"
 include { extract_barcode } from "./modules/process/barcode_extraction"
 
 include { plot_1_arg as plot_up_matching } from "./modules/process/barcode_extraction"
-plot_up_matching_script = Channel.fromPath("bin/plot/up_matching.py")
+plot_up_matching_script = Channel.fromPath("$workflow.projectDir/bin/plot/up_matching.py")
 
 include { plot_1_arg_1_value as plot_barcode_extraction } from "./modules/process/barcode_extraction"
-plot_barcode_extraction_script  = Channel.fromPath("bin/plot/barcode_extraction.py")
+plot_barcode_extraction_script  = Channel.fromPath("$workflow.projectDir/bin/plot/barcode_extraction.py")
 
 include { pcr_duplicates } from "./modules/process/barcode_extraction"
 
 include { plot_1_arg as plot_pcr_duplicates } from "./modules/process/barcode_extraction"
-plot_pcr_duplicates_script = Channel.fromPath("bin/plot/pcr_duplicates.py")
+plot_pcr_duplicates_script = Channel.fromPath("$workflow.projectDir/bin/plot/pcr_duplicates.py")
 /////////////////////
 
 ///////////////////////////
@@ -55,10 +55,10 @@ include { star } from "./modules/process/alignment"
 include { bam_tag as tag_bam } from "./modules/process/bam_tags"
 
 include { bam_metrics as reads_up_matching } from "./modules/process/bam_tags"
-reads_up_matching_script = Channel.fromPath("bin/bam/reads_up_matching.py")
+reads_up_matching_script = Channel.fromPath("$workflow.projectDir/bin/bam/reads_up_matching.py")
 
 include { plot_1_arg as plot_up_align } from "./modules/process/bam_tags"
-plot_up_align_script = Channel.fromPath("bin/plot/up_align.py")
+plot_up_align_script = Channel.fromPath("$workflow.projectDir/bin/plot/up_align.py")
 
 include { bam_filter as bam_filter_up_matched } from "./modules/process/bam_tags"
 /////////////////
@@ -69,21 +69,21 @@ include { bam_filter as bam_filter_up_matched } from "./modules/process/bam_tags
 include { umis_per_barcode } from "./modules/process/umis_per_barcode"
 
 include { bam_metrics as reads_umis_per_barcode } from "./modules/process/umis_per_barcode"
-reads_umis_per_barcode_script = Channel.fromPath("bin/bam/reads_umis_per_barcode.py")
+reads_umis_per_barcode_script = Channel.fromPath("$workflow.projectDir/bin/bam/reads_umis_per_barcode.py")
 
 include { bam_metrics as reads_umi_threshold } from "./modules/process/umis_per_barcode"
-reads_umi_threshold_script = Channel.fromPath("bin/bam/reads_umi_threshold.py")
+reads_umi_threshold_script = Channel.fromPath("$workflow.projectDir/bin/bam/reads_umi_threshold.py")
 
 include { bam_filter as bam_filter_umi_threshold } from "./modules/process/umis_per_barcode"
 
 include { plot_1_arg_1_val as plot_umi_threshold } from "./modules/process/umis_per_barcode"
-plot_umi_threshold_script = Channel.fromPath("bin/plot/umi_threshold.py")
+plot_umi_threshold_script = Channel.fromPath("$workflow.projectDir/bin/plot/umi_threshold.py")
 /////////////////////////////
 
 ////////////////
 // puck barcodes
 include { shuffling } from "./modules/process/puck_barcodes"
-shuffling_script = Channel.fromPath("bin/shuffling.py")
+shuffling_script = Channel.fromPath("$workflow.projectDir/bin/shuffling.py")
 ////////////////
 
 //////////////////////
@@ -97,28 +97,28 @@ include { get_barcodes } from "./modules/process/sequencing_barcodes"
 include { hamming } from "./modules/process/hamming"
 
 include { plot_2_args as plot_histo_hamming } from "./modules/process/hamming"
-plot_histo_hamming_script = Channel.fromPath("bin/plot/histo_hamming.py")
+plot_histo_hamming_script = Channel.fromPath("$workflow.projectDir/bin/plot/histo_hamming.py")
 ///////////////////
 
 ///////////////////
 // barcode matching
 
 include { matcher } from "./modules/process/barcode_matching"
-matcher_script = Channel.fromPath("bin/matcher.py")
+matcher_script = Channel.fromPath("$workflow.projectDir/bin/matcher.py")
 
 include { add_match } from "./modules/process/barcode_matching"
 
 include { plot_1_arg as plot_barcode_matching } from "./modules/process/barcode_matching"
-plot_barcode_matching_script = Channel.fromPath("bin/plot/barcode_matching.py")
+plot_barcode_matching_script = Channel.fromPath("$workflow.projectDir/bin/plot/barcode_matching.py")
 
 include { plot_1_arg as plot_barcode_align } from "./modules/process/barcode_matching"
-plot_barcode_align_script = Channel.fromPath("bin/plot/barcode_align.py")
+plot_barcode_align_script = Channel.fromPath("$workflow.projectDir/bin/plot/barcode_align.py")
 
 include { plot_1_arg as plot_histo_errors } from "./modules/process/barcode_matching"
-plot_histo_errors_script = Channel.fromPath("bin/plot/histo_errors.py")
+plot_histo_errors_script = Channel.fromPath("$workflow.projectDir/bin/plot/histo_errors.py")
 
 include { bam_metrics as reads_barcode_matching } from "./modules/process/barcode_matching"
-reads_barcode_matching_script = Channel.fromPath("bin/bam/reads_barcode_matching.py")
+reads_barcode_matching_script = Channel.fromPath("$workflow.projectDir/bin/bam/reads_barcode_matching.py")
 
 include { bam_filter as bam_filter_barcode_matched } from "./modules/process/barcode_matching"
 ///////////////////
@@ -129,16 +129,16 @@ include { bam_filter as bam_filter_barcode_matched } from "./modules/process/bar
 include { htseq } from "./modules/process/gene_tags"
 
 include { bam_metrics as count_gene_tags } from "./modules/process/gene_tags"
-count_gene_tags_script = Channel.fromPath("bin/bam/count_gene_tags.py")
+count_gene_tags_script = Channel.fromPath("$workflow.projectDir/bin/bam/count_gene_tags.py")
 
 include { bam_metrics as count_reads_per_umi } from "./modules/process/gene_tags"
-count_reads_per_umi_script = Channel.fromPath("bin/bam/reads_per_umi.py")
+count_reads_per_umi_script = Channel.fromPath("$workflow.projectDir/bin/bam/reads_per_umi.py")
 
 include { bam_metrics as count_reads_per_umi_gene } from "./modules/process/gene_tags"
-count_reads_per_umi_gene_script = Channel.fromPath("bin/bam/reads_per_umi_gene.py")
+count_reads_per_umi_gene_script = Channel.fromPath("$workflow.projectDir/bin/bam/reads_per_umi_gene.py")
 
 include { plot_1_arg as plot_gene_tags } from "./modules/process/gene_tags"
-plot_gene_tags_script = Channel.fromPath("bin/plot/gene_tags.py")
+plot_gene_tags_script = Channel.fromPath("$workflow.projectDir/bin/plot/gene_tags.py")
 
 include { bam_filter as bam_filter_gene_tags } from "./modules/process/gene_tags"
 ///////////////
@@ -149,18 +149,18 @@ include { bam_filter as bam_filter_gene_tags } from "./modules/process/gene_tags
 include { position_duplicates } from "./modules/process/duplicates"
 
 include { plot_1_arg as plot_position_duplicates } from "./modules/process/duplicates"
-plot_position_duplicates_script = Channel.fromPath("bin/plot/position_duplicates.py")
+plot_position_duplicates_script = Channel.fromPath("$workflow.projectDir/bin/plot/position_duplicates.py")
 
 include { select } from "./modules/process/duplicates"
 
 include { duplicates } from "./modules/process/duplicates"
-duplicates_script = Channel.fromPath("bin/duplicates.py")
+duplicates_script = Channel.fromPath("$workflow.projectDir/bin/duplicates.py")
 
 include { bam_metrics as count_select } from "./modules/process/duplicates"
-count_select_script = Channel.fromPath("bin/bam/count_select.py")
+count_select_script = Channel.fromPath("$workflow.projectDir/bin/bam/count_select.py")
 
 include { plot_1_arg as plot_select } from "./modules/process/duplicates"
-plot_select_script = Channel.fromPath("bin/plot/select.py")
+plot_select_script = Channel.fromPath("$workflow.projectDir/bin/plot/select.py")
 
 include { bam_filter as bam_filter_multimapped_umis } from "./modules/process/duplicates"
 /////////////
@@ -169,16 +169,16 @@ include { bam_filter as bam_filter_multimapped_umis } from "./modules/process/du
 // barcodes metrics
 
 include { bam_metrics as reads_per_barcode_umi } from "./modules/process/barcodes_metrics"
-reads_per_barcode_umi_script = Channel.fromPath("bin/bam/reads_per_barcode_umi.py")
+reads_per_barcode_umi_script = Channel.fromPath("$workflow.projectDir/bin/bam/reads_per_barcode_umi.py")
 
 include { plot_1_arg as plot_balance_barcode } from "./modules/process/barcodes_metrics"
-plot_balance_barcode_script = Channel.fromPath("bin/plot/balance_barcode.py")
+plot_balance_barcode_script = Channel.fromPath("$workflow.projectDir/bin/plot/balance_barcode.py")
 
 include { plot_1_arg as plot_balance_umi } from "./modules/process/barcodes_metrics"
-plot_balance_umi_script  = Channel.fromPath("bin/plot/balance_umi.py")
+plot_balance_umi_script  = Channel.fromPath("$workflow.projectDir/bin/plot/balance_umi.py")
 
 include { plot_1_arg as plot_reads_fraction } from "./modules/process/barcodes_metrics"
-plot_reads_fraction_script = Channel.fromPath("bin/plot/reads_fraction.py")
+plot_reads_fraction_script = Channel.fromPath("$workflow.projectDir/bin/plot/reads_fraction.py")
 ///////////////////
 
 //////
@@ -189,17 +189,17 @@ include { dge } from "./modules/process/digital_expression_matrix"
 /////////////////
 // counts metrics
 
-plot_histo_genes_script = Channel.fromPath("bin/plot/histo_genes.py")
 include { plot_1_arg as plot_histo_genes } from "./modules/process/counts_metrics"
+plot_histo_genes_script = Channel.fromPath("$workflow.projectDir/bin/plot/histo_genes.py")
 
-plot_histo_umis_script = Channel.fromPath("bin/plot/histo_umis.py")
 include { plot_1_arg as plot_histo_umis } from "./modules/process/counts_metrics"
+plot_histo_umis_script = Channel.fromPath("$workflow.projectDir/bin/plot/histo_umis.py")
 
-plot_spatial_umis_script  = Channel.fromPath("bin/plot/spatial_umi.py")
 include { plot_1_arg_csv_output as plot_umis_per_barcode } from "./modules/process/counts_metrics"
+plot_spatial_umis_script  = Channel.fromPath("$workflow.projectDir/bin/plot/spatial_umi.py")
 
-plot_umis_per_barcode_script = Channel.fromPath("bin/plot/umis_per_barcode.py")
 include { plot_2_args as plot_spatial_umis } from "./modules/process/counts_metrics"
+plot_umis_per_barcode_script = Channel.fromPath("$workflow.projectDir/bin/plot/umis_per_barcode.py")
 /////////////////
 
 /////////
