@@ -21,11 +21,6 @@ def count_plot(df, title):#
 	df["Annot"] = df.Reads.apply(lambda x: "{:,}".format(round(x,2)))
 	df["Annot"] = df.Annot + " reads\n" + df.Percent.astype(str) + " %"
 
-	df["index"] = df.Status
-	df = df.set_index("index")
-	n = df.loc["Unique", "Reads"] + df.loc["Included", "Reads"]
-	df = df.reset_index()
-
 	# the plot
 	fig = Figure(figsize=(8, 8))
 	ax = fig.add_subplot(111)
@@ -44,19 +39,21 @@ def count_plot(df, title):#
 			"xy": (i, df.iloc[i].Reads + df.Reads.max()/50),
 			"ha": "center",
 			"va": "bottom",
-			"size": 12,
+			"size": 16,
 			"color": "black"
 		}
 		ax.annotate(**args)
 
 	ax.set_ylim(0, df.Reads.max() + df.Reads.max()/8)
-	suptitle = "({:,} unambiguous/{:,} reads)".format(n, df.Reads.sum())
-	ax.set_title( title + "\n" + suptitle )
+	ax.set_title(title)
 	
 	fig.tight_layout()
 
 	return fig
 	############################################################################
+
+#csv_path = "results/temp_files/sample1/02_barcode_extraction/sample1.remove_dups.csv"
+#base_path = "tmp/test"
 
 ##########################
 if __name__ == "__main__":
@@ -66,14 +63,15 @@ if __name__ == "__main__":
 
 	names = ["Process", "Sample", "Status", "Reads"]
 	df = pd.read_csv(csv_path, header=None, names=names)
-
-	df["Status"] = df.Status.str.title()
-	cats = ["Unique", "Included", "Excluded", "Unresolved"]
-	df = df.set_index("Status").reindex(cats, fill_value=0).reset_index()
-	df = df.loc[ df.Status.isin(cats) ]
-	df["Status"] = pd.Categorical(df.Status, categories=cats)
+	df = df[["Status", "Reads"]]
 	
-	plt = count_plot(df, "Selecting multi-mapped UMIs (majority vote)")
+	values = df.set_index("Status").Reads
+	values.loc["Non duplicates"] = values.loc["Total"] - values.loc["Duplicates"]
+	values = values.loc[["Non duplicates", "Duplicates"]].reset_index()
+	status = ["Non duplicates", "Duplicates"]
+	values["Status"] = pd.Categorical(values.Status, categories=status)
+	
+	plt = count_plot(values, "PCR duplicates\n(same UMI and same read 2 sequence)")
 	plt.savefig(f"{base_path}.png")
 	plt.savefig(f"{base_path}.pdf")
 

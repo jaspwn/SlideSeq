@@ -38,6 +38,11 @@ plot_up_matching_script = Channel.fromPath("bin/plot/up_matching.py")
 
 include { plot_1_arg_1_value as plot_barcode_extraction } from "./modules/process/barcode_extraction"
 plot_barcode_extraction_script  = Channel.fromPath("bin/plot/barcode_extraction.py")
+
+include { pcr_duplicates } from "./modules/process/barcode_extraction"
+
+include { plot_1_arg as plot_pcr_duplicates } from "./modules/process/barcode_extraction"
+plot_pcr_duplicates_script = Channel.fromPath("bin/plot/pcr_duplicates.py")
 /////////////////////
 
 ///////////////////////////
@@ -140,6 +145,11 @@ include { bam_filter as bam_filter_gene_tags } from "./modules/process/gene_tags
 
 /////////////
 // duplicates
+
+include { position_duplicates } from "./modules/process/duplicates"
+
+include { plot_1_arg as plot_position_duplicates } from "./modules/process/duplicates"
+plot_position_duplicates_script = Channel.fromPath("bin/plot/position_duplicates.py")
 
 include { select } from "./modules/process/duplicates"
 
@@ -283,10 +293,20 @@ workflow {
 			.map{ [ it[0] , it[1] , it[0]["min_length"] , it[2] , it[3] ] }
 	)
 
+	pcr_duplicates(extract_barcode.out.fastq)
+
+	plot_pcr_duplicates(
+		pcr_duplicates
+			.out
+			.csv
+			.combine( Channel.from("pcr_duplicates") )
+			.combine(plot_pcr_duplicates_script)
+	)
+
 	///////////////////////////////////////////////////////////////////////////
 	// ALIGNMENT
 
-	star(extract_barcode.out.fastq)
+	star(pcr_duplicates.out.fastq)
 
 	///////////////////////////////////////////////////////////////////////////
 	// DUPLICATES
@@ -511,9 +531,24 @@ workflow {
 	///////////////////////////////////////////////////////////////////////////
 	// DUPLICATES
 
-	select(
+	position_duplicates(
 		bam_filter_gene_tags
 			.out
+			.map{ it[0..1] }
+	)
+
+	plot_position_duplicates(
+		position_duplicates
+			.out
+			.csv
+			.combine( Channel.from("pos_dups") )
+			.combine(plot_position_duplicates_script)
+	)
+
+	select(
+		position_duplicates
+			.out
+			.bam
 			.map{ it[0..1] }
 			.combine( Channel.from("select") )
 	)
@@ -631,6 +666,7 @@ workflow {
 	extract_barcode.out.metrics
 		.concat(	
 			extract_barcode.out.distances,
+			pcr_duplicates.out.csv,
 			reads_up_matching.out,
 			//reads_umis_per_barcode.out,
 			reads_umi_threshold.out,
@@ -639,6 +675,7 @@ workflow {
 			count_gene_tags.out,
 			//count_reads_per_umi.out,
 			//count_reads_per_umi_gene.out,
+			position_duplicates.out.csv,
 			count_select.out,
 			//reads_per_barcode_umi.out,
 			plot_umis_per_barcode.out.csv
@@ -652,11 +689,13 @@ workflow {
 	// plot
 	plot_barcode_extraction.out.pdf
 		.concat(
+			plot_pcr_duplicates.out.pdf,
 			plot_up_matching.out.pdf,
 			plot_up_align.out.pdf,
 			plot_umi_threshold.out.pdf,
 			plot_barcode_align.out.pdf,
 			plot_gene_tags.out.pdf,
+			plot_position_duplicates.out.pdf,
 			plot_select.out.pdf,
 			plot_balance_barcode.out.pdf,
 			plot_balance_umi.out.pdf,

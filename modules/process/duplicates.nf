@@ -1,5 +1,36 @@
 import java.nio.file.Paths
 
+process position_duplicates {
+
+	label "slideseq_tools"
+	
+	tag { "${name}" }
+
+	publishDir Paths.get( params.out_dir , "temp_files" ),
+		mode: "copy",
+		overwrite: "true",
+		saveAs: { filename -> "${name}/12_duplicates/${filename}" }
+
+	input:
+		tuple val(metadata), path(bam)
+
+	output:
+		tuple val(metadata), path("${name}.pos_dups.bam"), path("${name}.pos_dups.bam.bai"), emit: bam
+		tuple val(metadata), path("${name}.pos_dups.csv"), emit: csv
+
+	script:		
+		
+		name = metadata["name"]
+
+		"""
+		position_duplicates --sample "${name}" $bam
+		sed -i 's/^/Position duplicates,/g' "${name}.pos_dups.csv"
+
+		echo "Indexing..."
+		samtools index "${name}.pos_dups.bam"
+		"""
+}
+
 process select {
 
 	label "slideseq_tools"
