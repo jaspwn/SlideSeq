@@ -93,3 +93,31 @@ process plot_1_arg_1_value {
 		"""
 }
 
+//process pcr_duplicates {
+//
+//	label "slideseq_tools"
+//	
+//	tag { "${name}" }
+//
+//	publishDir Paths.get( params.out_dir , "temp_files" ),
+//		mode: "copy",
+//		overwrite: "true",
+//		saveAs: { filename -> "${name}/02_barcode_extraction/${filename}" }
+//
+//	input:
+//		tuple val(metadata), path(fastq)
+//
+//	output:
+//		tuple val(metadata), path("${name}.remove_dups.fastq.gz"), emit: fastq
+//		tuple val(metadata), path("${name}.remove_dups.csv"), emit: csv
+//
+//	script:		
+//		
+//		name = metadata["name"]
+//
+//		"""
+//		pcr_duplicates --name "${name}" $fastq
+//		sed -i 's/^/PCR duplicates,/g' "${name}.remove_dups.csv"
+//		"""
+//}
+
