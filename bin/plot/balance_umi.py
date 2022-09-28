@@ -63,9 +63,8 @@ if __name__ == "__main__":
 	csv_path = sys.argv[1]
 	base_path = sys.argv[2]
 	
-	df = pd\
-		.read_csv(csv_path, header=None)\
-		.rename(columns={0: "Barcode", 1: "UMI", 2: "Reads"})
+	names = ["Process", "Sample", "Barcode", "UMI", "Reads"]
+	df = pd.read_csv(csv_path, header=None, names=names)
 	
 	umis = pd.Series(df.UMI.sort_values().unique())
 	umis = pd.DataFrame(umis.apply(list).to_list())

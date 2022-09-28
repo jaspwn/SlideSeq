@@ -64,8 +64,9 @@ if __name__ == "__main__":
 	csv_path = sys.argv[1]
 	base_path = sys.argv[2]
 
-	df = pd.read_csv(csv_path, header=None)
-	df.columns = ["Status", "Reads"]
+	names = ["Process", "Sample", "Status", "Reads"]
+	df = pd.read_csv(csv_path, header=None, names=names)
+
 	df["Status"] = df.Status.str.title()
 	cats = ["Unique", "Included", "Excluded", "Unresolved"]
 	df = df.set_index("Status").reindex(cats, fill_value=0).reset_index()

@@ -3,13 +3,13 @@ import java.nio.file.Paths
 process fastqc {
 
 	label "sequencing"
-	//label "quality_control"
 	
 	tag { "${name}" }
 
-	publishDir Paths.get( params.out_dir , "qc" , "fastqc" ),
+	publishDir Paths.get( params.out_dir , "temp_files" ),
 		mode: "copy",
-		overwrite: "true"
+		overwrite: "true",
+		saveAs: { filename -> "${name}/00_fastqc/${filename}" }
 
 	input:
 		tuple val(metadata), path(fastq1), path(fastq2)
@@ -27,31 +27,35 @@ process fastqc {
 		"""
 }
 
-process duplicates {
+process mark_duplicates {
 
-	label "python"
-	//label "quality_control"
-	
-	tag { "${basename}" }
+	label "sequencing"
+	time "10:00:00"
 
-	publishDir Paths.get( params.out_dir , "qc" ),
+	tag { "${name}" }
+
+	publishDir Paths.get( params.out_dir , "temp_files" ),
 		mode: "copy",
-		overwrite: "true"
+		overwrite: "true",
+		saveAs: { filename -> "${name}/04_mark_dulicates/${filename}" }
 
 	input:
-		tuple val(metadata), path(csv), path(fastq1), path(fastq2), path(script)
-
+		tuple val(metadata), path(bam)
+	
 	output:
-		tuple val(metadata), file("${basename}.csv")
-
-	script:		
-
-		name = metadata["name"]
-		status = metadata["status"]
-		basename = "${name}.${status}"
+		tuple val(metadata), path("${name}.dup.bam"), emit: bam
+		tuple val(metadata), path("${name}.dup.txt"), emit: metrics
+	
+	script:
 		
+		name = metadata["name"]
+
 		"""
-		python3 $script $csv $fastq1 $fastq2 "${basename}.csv"
+		picard-tools \
+			MarkDuplicates \
+				I=$bam \
+				O=${name}.dup.bam \
+				M=${name}.dup.txt
 		"""
 }
 

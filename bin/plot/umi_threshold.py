@@ -60,17 +60,20 @@ if __name__ == "__main__":
 	base_path = sys.argv[2]
 	threshold = int( sys.argv[3] )
 
-	df = pd.read_csv(csv_path, header=None)
-	df.columns = ["Status", "Reads"]
+	names = ["Process", "Sample", "Status", "Reads"]
+	df = pd.read_csv(csv_path, header=None, names=names)
+
 	status = {
 		"PASS": f"$\geq${threshold} UMIs",
 		"TOO_LOW": f"$<${threshold} UMIs"
 	}
 	df = df.loc[ df.Status.isin( status.keys() ) ]
+
 	df = df\
 		.set_index("Status")\
 		.reindex(status.keys(), fill_value=0)\
 		.reset_index()
+
 	df["Status"] = df.Status.map(status)
 	df["Status"] = pd.Categorical(df.Status, categories=status.values())
 	

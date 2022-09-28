@@ -7,240 +7,198 @@ import java.nio.file.Paths
 ///////////////////////////////////////////////////////////////////////////////
 //// METHODS //////////////////////////////////////////////////////////////////
 
-/////////////////////////////////
-def addValue(map, key, value) {//
-/////////////////////////////////
-
-	def new_map = map.clone()
-
-	new_map.put(key, value)
-
-	return new_map
-}
-
-/////////////////////////////
-def removeKeys(map, keys) {//
-/////////////////////////////
-
-	def new_map = [:]
-
-	map.each{
-		if ( ! keys.contains(it.key) )
-		{
-			new_map.put(it.key, it.value)
-		}
-	}
-
-	return new_map
-}
-
-///////////////////////////////
-def getMinLength(structure) {//
-///////////////////////////////
-
-	return structure.split("[A-Z]").collect{it as int }.sum()
-}
-
-/////////////////////////
-def getPuckName(puck) {//
-/////////////////////////
-
-	def f = new File(puck)
-
-	return f.getName().toString().replaceAll('\\.csv$', '') // single quotes!
-}
+include {
+	addValue;
+	removeKeys;
+	getMinLength;
+	getPuckName
+	} from "./modules/utils.nf"
 
 ///////////////////////////////////////////////////////////////////////////////
 //// PROCESSES ////////////////////////////////////////////////////////////////
 
+//////////////////
+// quality control
+include { fastqc } from "./modules/process/quality_control"
+include { mark_duplicates } from "./modules/process/quality_control"
+//////////////////
 
 //////////
 // samples
-
-include { bcl2fastq } from "./modules/process/demultiplexing"
-include { merge_lanes } from "./modules/process/demultiplexing"
-include { fastqc } from "./modules/process/quality_control"
+include { merge_lanes } from "./modules/process/preprocessing"
 //////////
-
-////////
-// pucks
-
-include { shuffling } from "./modules/process/pucks"
-shuffling_script = Channel.fromPath("bin/shuffling.py")
-////////
 
 /////////////////////
 // barcode extraction
 
-include { extract_barcode } from "./modules/process/up_primer"
-extract_barcode_script = Channel.fromPath("bin/extract_barcode")
+include { extract_barcode } from "./modules/process/barcode_extraction"
 
-include { plot_1_arg as plot_up_matching } from "./modules/process/plot"
+include { plot_1_arg as plot_up_matching } from "./modules/process/barcode_extraction"
 plot_up_matching_script = Channel.fromPath("bin/plot/up_matching.py")
-include { plot_1_arg_1_val as plot_barcode_extraction } from "./modules/process/plot"
+
+include { plot_1_arg_1_value as plot_barcode_extraction } from "./modules/process/barcode_extraction"
 plot_barcode_extraction_script  = Channel.fromPath("bin/plot/barcode_extraction.py")
 /////////////////////
 
 ///////////////////////////
 // alignment and duplicates
-include { star } from "./modules/process/align"
-include { mark_duplicates } from "./modules/process/tagging"
+include { star } from "./modules/process/alignment"
 ///////////////////////////
 
 /////////////////
 // slide seq tags
-include { bam_tag as tag_bam } from "./modules/process/tagging"
-tag_bam_script = Channel.fromPath("bin/tag_bam")
+include { bam_tag as tag_bam } from "./modules/process/bam_tags"
 
-include { bam_metrics_hmem as reads_up_matching } from "./modules/process/bam"
+include { bam_metrics as reads_up_matching } from "./modules/process/bam_tags"
 reads_up_matching_script = Channel.fromPath("bin/bam/reads_up_matching.py")
 
-include { plot_1_arg as plot_up_align } from "./modules/process/plot"
+include { plot_1_arg as plot_up_align } from "./modules/process/bam_tags"
 plot_up_align_script = Channel.fromPath("bin/plot/up_align.py")
 
-include { bam_filter as bam_filter_up_matched } from "./modules/process/bam"
+include { bam_filter as bam_filter_up_matched } from "./modules/process/bam_tags"
 /////////////////
 
 /////////////////////////////
 // umis per barcode threshold
 
-include { umis_per_barcode } from "./modules/process/tagging"
-umis_per_barcode_script = Channel.fromPath("bin/umis_per_barcode")
+include { umis_per_barcode } from "./modules/process/umis_per_barcode"
 
-include { bam_metrics as reads_umis_per_barcode } from "./modules/process/bam"
+include { bam_metrics as reads_umis_per_barcode } from "./modules/process/umis_per_barcode"
 reads_umis_per_barcode_script = Channel.fromPath("bin/bam/reads_umis_per_barcode.py")
 
-include { bam_metrics as reads_umi_threshold } from "./modules/process/bam"
+include { bam_metrics as reads_umi_threshold } from "./modules/process/umis_per_barcode"
 reads_umi_threshold_script = Channel.fromPath("bin/bam/reads_umi_threshold.py")
 
-include { bam_filter as bam_filter_umi_threshold } from "./modules/process/bam"
+include { bam_filter as bam_filter_umi_threshold } from "./modules/process/umis_per_barcode"
 
-include { bam_metrics as reads_barcode_matching } from "./modules/process/bam"
-reads_barcode_matching_script = Channel.fromPath("bin/bam/reads_barcode_matching.py")
-
-include { plot_1_val as plot_umi_threshold } from "./modules/process/plot"
+include { plot_1_arg_1_val as plot_umi_threshold } from "./modules/process/umis_per_barcode"
 plot_umi_threshold_script = Channel.fromPath("bin/plot/umi_threshold.py")
 /////////////////////////////
+
+////////////////
+// puck barcodes
+include { shuffling } from "./modules/process/puck_barcodes"
+shuffling_script = Channel.fromPath("bin/shuffling.py")
+////////////////
+
+//////////////////////
+// sequencing barcodes
+include { get_barcodes } from "./modules/process/sequencing_barcodes"
+//////////////////////
 
 ///////////////////
 // hamming distance
 
-include { hamming } from "./modules/process/integration"
-hamming_script =
-	Channel
-		.fromPath("bin/hamming/hamming")
-		.concat(
-			Channel
-				.fromPath("bin/hamming/cl")
-		)
-		.collect()
+include { hamming } from "./modules/process/hamming"
 
-include { plot_2_args as plot_histo_hamming } from "./modules/process/plot"
+include { plot_2_args as plot_histo_hamming } from "./modules/process/hamming"
 plot_histo_hamming_script = Channel.fromPath("bin/plot/histo_hamming.py")
 ///////////////////
 
 ///////////////////
 // barcode matching
 
-include { get_barcodes } from "./modules/process/integration"
-
-include { matcher } from "./modules/process/integration"
+include { matcher } from "./modules/process/barcode_matching"
 matcher_script = Channel.fromPath("bin/matcher.py")
 
-include { add_match } from "./modules/process/integration"
-add_match_script = Channel.fromPath("bin/add_match")
+include { add_match } from "./modules/process/barcode_matching"
 
-include { plot_1_arg as plot_barcode_matching } from "./modules/process/plot"
+include { plot_1_arg as plot_barcode_matching } from "./modules/process/barcode_matching"
 plot_barcode_matching_script = Channel.fromPath("bin/plot/barcode_matching.py")
 
-include { plot_1_arg as plot_barcode_align } from "./modules/process/plot"
+include { plot_1_arg as plot_barcode_align } from "./modules/process/barcode_matching"
 plot_barcode_align_script = Channel.fromPath("bin/plot/barcode_align.py")
 
-include { plot_1_arg as plot_histo_errors } from "./modules/process/plot"
+include { plot_1_arg as plot_histo_errors } from "./modules/process/barcode_matching"
 plot_histo_errors_script = Channel.fromPath("bin/plot/histo_errors.py")
 
-include { bam_filter as bam_filter_barcode_matched } from "./modules/process/bam"
+include { bam_metrics as reads_barcode_matching } from "./modules/process/barcode_matching"
+reads_barcode_matching_script = Channel.fromPath("bin/bam/reads_barcode_matching.py")
+
+include { bam_filter as bam_filter_barcode_matched } from "./modules/process/barcode_matching"
 ///////////////////
 
 ///////////////
 // gene tagging
 
-include { htseq } from "./modules/process/tagging"
+include { htseq } from "./modules/process/gene_tags"
 
-include { bam_metrics as count_gene_tags } from "./modules/process/bam"
+include { bam_metrics as count_gene_tags } from "./modules/process/gene_tags"
 count_gene_tags_script = Channel.fromPath("bin/bam/count_gene_tags.py")
 
-include { bam_metrics as count_reads_per_umi } from "./modules/process/bam"
+include { bam_metrics as count_reads_per_umi } from "./modules/process/gene_tags"
 count_reads_per_umi_script = Channel.fromPath("bin/bam/reads_per_umi.py")
 
-include { bam_metrics as count_reads_per_umi_gene } from "./modules/process/bam"
+include { bam_metrics as count_reads_per_umi_gene } from "./modules/process/gene_tags"
 count_reads_per_umi_gene_script = Channel.fromPath("bin/bam/reads_per_umi_gene.py")
 
-include { plot_1_arg as plot_gene_tags } from "./modules/process/plot"
+include { plot_1_arg as plot_gene_tags } from "./modules/process/gene_tags"
 plot_gene_tags_script = Channel.fromPath("bin/plot/gene_tags.py")
 
-include { bam_filter as bam_filter_gene_tags } from "./modules/process/bam"
-
+include { bam_filter as bam_filter_gene_tags } from "./modules/process/gene_tags"
 ///////////////
 
-/////////////////////
-// umis multi mapping
+/////////////
+// duplicates
 
-include { select } from "./modules/process/tagging"
-select_script = Channel.fromPath("bin/select")
+include { select } from "./modules/process/duplicates"
 
-include { duplicates } from "./modules/process/quality_control"
+include { duplicates } from "./modules/process/duplicates"
 duplicates_script = Channel.fromPath("bin/duplicates.py")
 
-include { bam_metrics as count_select } from "./modules/process/bam"
+include { bam_metrics as count_select } from "./modules/process/duplicates"
 count_select_script = Channel.fromPath("bin/bam/count_select.py")
 
-include { plot_1_arg as plot_select } from "./modules/process/plot"
+include { plot_1_arg as plot_select } from "./modules/process/duplicates"
 plot_select_script = Channel.fromPath("bin/plot/select.py")
 
-include { bam_filter as bam_filter_multimapped_umis } from "./modules/process/bam"
-/////////////////////
+include { bam_filter as bam_filter_multimapped_umis } from "./modules/process/duplicates"
+/////////////
 
-////////////
-// sequences
+///////////////////
+// barcodes metrics
 
-include { bam_metrics as reads_per_barcode_umi } from "./modules/process/bam"
+include { bam_metrics as reads_per_barcode_umi } from "./modules/process/barcodes_metrics"
 reads_per_barcode_umi_script = Channel.fromPath("bin/bam/reads_per_barcode_umi.py")
 
-include { plot_1_arg as plot_balance_barcode } from "./modules/process/plot"
+include { plot_1_arg as plot_balance_barcode } from "./modules/process/barcodes_metrics"
 plot_balance_barcode_script = Channel.fromPath("bin/plot/balance_barcode.py")
 
-include { plot_1_arg as plot_balance_umi } from "./modules/process/plot"
+include { plot_1_arg as plot_balance_umi } from "./modules/process/barcodes_metrics"
 plot_balance_umi_script  = Channel.fromPath("bin/plot/balance_umi.py")
 
-include { plot_1_arg as plot_reads_fraction } from "./modules/process/plot"
+include { plot_1_arg as plot_reads_fraction } from "./modules/process/barcodes_metrics"
 plot_reads_fraction_script = Channel.fromPath("bin/plot/reads_fraction.py")
-////////////
+///////////////////
 
 //////
 // dge
-
-include { dge } from "./modules/process/export"
-count_script = Channel.fromPath("bin/count")
-
-plot_histo_genes_script = Channel.fromPath("bin/plot/histo_genes.py")
-plot_histo_umis_script = Channel.fromPath("bin/plot/histo_umis.py")
-plot_spatial_umis_script  = Channel.fromPath("bin/plot/spatial_umi.py")
-plot_umis_per_barcode_script = Channel.fromPath("bin/plot/umis_per_barcode.py")
-
-include { plot_1_arg as plot_histo_genes } from "./modules/process/plot"
-include { plot_1_arg as plot_histo_umis } from "./modules/process/plot"
-include { plot_1_arg as plot_umis_per_barcode } from "./modules/process/plot"
-include { plot_2_args as plot_spatial_umis } from "./modules/process/plot"
+include { dge } from "./modules/process/digital_expression_matrix"
 //////
 
+/////////////////
+// counts metrics
+
+plot_histo_genes_script = Channel.fromPath("bin/plot/histo_genes.py")
+include { plot_1_arg as plot_histo_genes } from "./modules/process/counts_metrics"
+
+plot_histo_umis_script = Channel.fromPath("bin/plot/histo_umis.py")
+include { plot_1_arg as plot_histo_umis } from "./modules/process/counts_metrics"
+
+plot_spatial_umis_script  = Channel.fromPath("bin/plot/spatial_umi.py")
+include { plot_1_arg_csv_output as plot_umis_per_barcode } from "./modules/process/counts_metrics"
+
+plot_umis_per_barcode_script = Channel.fromPath("bin/plot/umis_per_barcode.py")
+include { plot_2_args as plot_spatial_umis } from "./modules/process/counts_metrics"
+/////////////////
+
 /////////
-// output 
+// export
 
 include { merge_plots } from "./modules/process/export"
-include { rename_coords } from "./modules/process/export"
+include { reformat_coords } from "./modules/process/export"
+include { export_metrics } from "./modules/process/export"
 /////////
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //// DESIGN ///////////////////////////////////////////////////////////////////
@@ -269,6 +227,19 @@ FASTQ
 workflow {
 
 	///////////////////////////////////////////////////////////////////////////
+	// FASTQC
+
+	FASTQ
+		.map{[
+			removeKeys(it, ["fastq_1", "fastq_2"]),
+			it["fastq_1"],
+			it["fastq_2"]
+		]}
+		.set{ TO_FASTQC }
+
+	fastqc(TO_FASTQC)
+
+	///////////////////////////////////////////////////////////////////////////
 	// MERGE
 
 	FASTQ
@@ -291,32 +262,9 @@ workflow {
 	merge_lanes(TO_MERGE)
 
 	///////////////////////////////////////////////////////////////////////////
+	// BARCODE EXTRACTION
 
-	FASTQ
-		.map{[
-			removeKeys(it, ["fastq_1", "fastq_2"]),
-			it["fastq_1"],
-			it["fastq_2"]
-		]}
-		.set{ TO_FASTQC }
-
-	fastqc(TO_FASTQC)
-
-	///////////////////////////////////////////////////////////////////////////
-	// PUCK BARCODES
-
-	shuffling( PUCKS.combine(shuffling_script) )
-
-	shuffling
-		.out
-		.ordered
-		.concat( shuffling.out.shuffled )
-		.set{ PUCK_BARCODES }
-
-	///////////////////////////////////////////////////////////////////////////
-	// SEQUENCING BARCODES
-
-	extract_barcode( merge_lanes.out.combine(extract_barcode_script) )
+	extract_barcode(merge_lanes.out)
 
 	plot_up_matching(
 		extract_barcode
@@ -354,7 +302,6 @@ workflow {
 			.out
 			.bam
 			.combine( Channel.from("tagged") )
-			.combine(tag_bam_script)
 	)
 
 	// 3 columns: Matched, Mapped, Reads
@@ -364,6 +311,7 @@ workflow {
 			.combine( Channel.from("reads_up_matching") )
 			.combine(reads_up_matching_script)
 	)
+
 	plot_up_align(
 		reads_up_matching
 			.out
@@ -381,11 +329,7 @@ workflow {
 	///////////////////////////////////////////////////////////////////////////
 	// UMIS PER BARCODE THRESHOLD
 
-	umis_per_barcode(
-		bam_filter_up_matched
-			.out
-			.combine(umis_per_barcode_script)
-	)
+	umis_per_barcode(bam_filter_up_matched.out)
 
 	reads_umis_per_barcode(
 		umis_per_barcode
@@ -417,18 +361,33 @@ workflow {
 	)
 
 	///////////////////////////////////////////////////////////////////////////
-	// HAMMING DISTANCE
+	// SEQUENCING BARCODES
 
-	get_barcodes( reads_umis_per_barcode.out )
+	get_barcodes(reads_umis_per_barcode.out)
+
+	///////////////////////////////////////////////////////////////////////////
+	// PUCK BARCODES
 
 	get_barcodes
 		.out
-		.combine( PUCK_BARCODES )
+		.combine( PUCKS )
 		.filter{ it[0]["puck"] == it[2] }
-		.map{ [ addValue(it[0], "barcodes", it[3]) , it[1] , it[4] ] }
+		.map{ [ *it[0..1] , it[3] ] }
+		.set{ TO_SHUFFLING }
+
+	shuffling( TO_SHUFFLING.combine(shuffling_script) )
+
+	///////////////////////////////////////////////////////////////////////////
+	// HAMMING DISTANCE
+
+	shuffling
+		.out
+		.ordered
+		.concat( shuffling.out.shuffled )
+		.map{ [ addValue(it[0], "barcodes", it[2]) , it[1] , it[3] ] }
 		.set{ TO_HAMMING }
 
-	hamming( TO_HAMMING.combine(hamming_script) )
+	hamming(TO_HAMMING)
 
 	plot_histo_hamming(
 		hamming
@@ -484,7 +443,7 @@ workflow {
 			.combine(plot_histo_errors_script)
 	)
 
-	add_match( TO_ADD_MATCH.combine(add_match_script) )
+	add_match(TO_ADD_MATCH)
 
 	reads_barcode_matching(
 		add_match
@@ -508,7 +467,7 @@ workflow {
 	)
 
 	///////////////////////////////////////////////////////////////////////////
-	// GENE COUNT
+	// GENE TAGS
 
 	htseq(bam_filter_barcode_matched.out)
 
@@ -550,14 +509,13 @@ workflow {
 	)
 
 	///////////////////////////////////////////////////////////////////////////
-	// UMIS MAPPINGS
+	// DUPLICATES
 
 	select(
 		bam_filter_gene_tags
 			.out
 			.map{ it[0..1] }
 			.combine( Channel.from("select") )
-			.combine(select_script)
 	)
 
 	select
@@ -569,6 +527,7 @@ workflow {
 		.filter{ it[0]["name"] == it[3]["name"] }
 		.map{ [ addValue(it[0], "status", it[1]) , it[2] , *it[4..5] ] }
 		.set{ TO_DUPLICATES }
+
 	duplicates(TO_DUPLICATES.combine(duplicates_script))
 
 	count_select(
@@ -578,6 +537,7 @@ workflow {
 			.combine( Channel.from("count_select") )
 			.combine(count_select_script)
 	)
+
 	plot_select(
 		count_select
 			.out
@@ -594,7 +554,7 @@ workflow {
 	)
 
 	///////////////////////////////////////////////////////////////////////////
-	// SEQUENCES
+	// BARCODES METRICS
 
 	reads_per_barcode_umi(
 		bam_filter_multimapped_umis
@@ -625,9 +585,12 @@ workflow {
 	)
 
 	///////////////////////////////////////////////////////////////////////////
-	// EXPRESSION MATRIX
+	// DIGITAL EXPRESSION MATRIX
 
-	dge( bam_filter_multimapped_umis.out.map{it[0..1]}.combine(count_script) )
+	dge( bam_filter_multimapped_umis.out.map{it[0..1]} )
+
+	///////////////////////////////////////////////////////////////////////////
+	// COUNTS METRICS
 
 	plot_histo_umis(
 		dge
@@ -650,8 +613,6 @@ workflow {
 			.combine(plot_umis_per_barcode_script)
 	)
 
-	///////////////
-	// spatial umis
 	plot_spatial_umis(
 		dge
 			.out
@@ -662,14 +623,34 @@ workflow {
 			.combine( Channel.from("spatial_umis") )
 			.combine(plot_spatial_umis_script)
 	)
-	////////////////
 
 	///////////////////////////////////////////////////////////////////////////
-	// OUTPUT
+	// EXPORT
+
+	// metrics
+	extract_barcode.out.metrics
+		.concat(	
+			extract_barcode.out.distances,
+			reads_up_matching.out,
+			//reads_umis_per_barcode.out,
+			reads_umi_threshold.out,
+			matcher.out.metrics,
+			reads_barcode_matching.out,
+			count_gene_tags.out,
+			//count_reads_per_umi.out,
+			//count_reads_per_umi_gene.out,
+			count_select.out,
+			//reads_per_barcode_umi.out,
+			plot_umis_per_barcode.out.csv
+		)
+		.map{ it[1] }
+		.collect()
+		.set{ ALL_METRICS }
 	
-	plot_barcode_extraction
-		.out
-		.pdf
+	export_metrics(ALL_METRICS)
+	
+	// plot
+	plot_barcode_extraction.out.pdf
 		.concat(
 			plot_up_matching.out.pdf,
 			plot_up_align.out.pdf,
@@ -694,6 +675,7 @@ workflow {
 	
 	merge_plots(TO_MERGE_PLOTS)
 
-	rename_coords( matcher.out.coords.filter{ it[0]["barcodes"] == "ordered"} )
+	// spatial info
+	reformat_coords( matcher.out.coords.filter{ it[0]["barcodes"] == "ordered"} )
 }
 

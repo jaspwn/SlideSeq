@@ -75,6 +75,8 @@ if __name__ == "__main__":
 			"Count": [umis.UMIs.mean(), top10.UMIs.mean()]
 		})
 	
+	mean_umis.to_csv(f"{base_path}.csv", index=False, header=False)
+	
 	plt = count_plot(mean_umis, "Number of UMIs per matched barcodes")
 	plt.savefig(f"{base_path}.png")
 	plt.savefig(f"{base_path}.pdf")

@@ -86,7 +86,8 @@ if __name__ == "__main__":
 	csv_path = sys.argv[1]
 	base_path = sys.argv[2]
 
-	df = pd.read_csv(csv_path, header=None, names=["Matched", "Mapped", "Reads"])
+	names = ["Process", "Sample", "Matched", "Mapped", "Reads"]
+	df = pd.read_csv(csv_path, header=None, names=names)
 
 	# reindex
 	index = [

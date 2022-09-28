@@ -57,8 +57,12 @@ if __name__ == "__main__":
 	csv_path = sys.argv[1]
 	base_path = sys.argv[2]
 	
-	df = pd.read_csv(csv_path)
+	df = pd.read_csv(csv_path, names=["Process", "Sample", "Metric", "Value"])
+
+	df = df[ ["Metric", "Value"] ]
+
 	metrics = ["Sequencing barcodes", "Puck barcodes", "Matches"]
+
 	df = df.loc[ df.Metric.isin(metrics) ]
 	df.columns = ["Name", "Count"]
 	df["Name"] = ["Sequencing", "Puck", "Matched"]

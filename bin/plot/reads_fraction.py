@@ -35,8 +35,9 @@ if __name__ == "__main__":
 	csv_path = sys.argv[1]
 	base_path = sys.argv[2]
 	
-	df = pd.read_csv(csv_path, header=None)
-	df.columns = ["Barcode", "UMI", "Reads"]
+	names = ["Process", "Sample", "Barcode", "UMI", "Reads"]
+	df = pd.read_csv(csv_path, header=None, names=names)
+
 	reads = df\
 		.groupby("Barcode")\
 		.apply(lambda x: x.Reads.sum())\

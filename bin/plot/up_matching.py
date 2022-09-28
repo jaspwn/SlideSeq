@@ -65,7 +65,8 @@ if __name__ == "__main__":
 	csv_path = sys.argv[1]
 	base_path = sys.argv[2]
 	
-	df = pd.read_csv(csv_path, header=None, names=["Sample", "Length", "Reads"])
+	names = ["Process", "Sample", "Length", "Reads"]
+	df = pd.read_csv(csv_path, header=None, names=names)
 
 	# reindex if necessary
 	index = ["Bead barcode length", "Long enough reads", "Total reads",

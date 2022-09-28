@@ -70,7 +70,7 @@ if __name__ == "__main__":
 	csv_path = sys.argv[1]
 	base_path = sys.argv[2]
 	
-	names = {
+	new_names = {
 		"__success": "Success",
 		"__no_feature": "No feature",
 		"__ambiguous": "Ambiguous",
@@ -79,8 +79,9 @@ if __name__ == "__main__":
 		"__alignment_not_unique": "Not unique"
 		}
 	
-	df = pd.read_csv(csv_path, header=None, names=["Tag", "Reads"])
-	df["Tag"] = df.Tag.map(names)
+	names = ["Process", "Sample", "Tag", "Reads"]
+	df = pd.read_csv(csv_path, header=None, names=names)
+	df["Tag"] = df.Tag.map(new_names)
 	
 	ddf, plt = tag_plot(df, "Gene annotation of the reads")
 	plt.savefig(f"{base_path}.png")

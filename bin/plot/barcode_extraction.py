@@ -66,7 +66,8 @@ if __name__ == "__main__":
 	threshold = int(sys.argv[2])
 	base_path = sys.argv[3]
 	
-	df = pd.read_csv(csv_path, header=None, names=["Sample", "Length", "Reads"])
+	names = ["Process", "Sample", "Length", "Reads"]
+	df = pd.read_csv(csv_path, header=None, names=names)
 
 	# reindex
 	index = [

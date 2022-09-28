@@ -61,7 +61,7 @@ if __name__ == "__main__":
 	csv_path = sys.argv[1]
 	base_path = sys.argv[2]
 	
-	df = pd.read_csv(csv_path)
+	df = pd.read_csv(csv_path, names=["Sample", "SeqBarcode", "PuckBarcode"])
 	
 	errors = df\
 		.apply(lambda x: error(x.PuckBarcode, x.SeqBarcode), axis=1)\

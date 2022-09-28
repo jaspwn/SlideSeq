@@ -50,13 +50,14 @@ The procedure includes 3 successive steps and is the following:
 # minimum hamming distance for each, number of reads per barcodes and
 # coordinates
 hamming = pd.read_csv(hamming_path, header=None)
-hamming.columns = ["SeqBarcode", "Distance", "Number", "PuckBarcode"]
+hamming.columns = ["Process", "Sample", "SeqBarcode", "Distance", "Number", "PuckBarcode"]
 hamming = hamming\
 	.assign(PuckBarcode=lambda x: x.PuckBarcode.str.split(":"))\
 	.explode("PuckBarcode")
 reads = pd.read_csv(reads_path, header=None)
-reads.columns = ["SeqBarcode", "Reads", "UMIs"]
+reads.columns = ["Process", "Sample", "SeqBarcode", "Reads", "UMIs"]
 coords = pd.read_csv(coords_path).rename(columns={"Barcode": "PuckBarcode"})
+sample = hamming.Sample.values[0]
 
 # default barcode
 l = len(hamming.PuckBarcode.iloc[0])
@@ -166,14 +167,29 @@ metrics = pd.DataFrame.from_records([
 	{"Metric": "Distance >0 and 1 match", "Value": n_one},
 	{"Metric": f"Distance <{max_distance+1} and <{max_matches+1} match", "Value": n_more}
 ])
+metrics["Process"] = "Barcode matching"
+metrics["Sample"] = sample
+metrics = metrics[["Process", "Sample", "Metric", "Value"]]
 
 ######
 # save
 
 final = d.loc[ d.Matched == "MATCHED" ]
-final = final[ ["SeqBarcode", "PuckBarcode", "x", "y", "Distance", "Number", "Reads" ] ]
+final["Process"] = "Barcode matching"
+final["Sample"] = sample
+final = final[
+	["Process", "Sample", "SeqBarcode", "PuckBarcode", "x", "y", "Distance",
+		"Number", "Reads" ]
+	]
 final.to_csv(f"{base_path}.csv", index=False)
+
 d.to_csv(f"{base_path}.values.matching.csv", index=False)
-metrics.to_csv(f"{base_path}.metrics.matching.csv", index=False)
-matching.drop("Matched", axis=1).to_csv(f"{base_path}.map.matching.csv", index=False)
+
+metrics.to_csv(f"{base_path}.metrics.matching.csv", index=False, header=False)
+
+matching\
+	.drop("Matched", axis=1)\
+	.assign(Process="Barcode matching", Sample=sample)\
+	.loc[:, ["Process", "Sample", "SeqBarcode", "PuckBarcode"] ]\
+	.to_csv(f"{base_path}.map.matching.csv", index=False)
 

@@ -1,10 +1,14 @@
+import java.nio.file.Paths
 
 process merge_plots {
 
-	label "export"
 	label "python"
 	
 	tag { "${name}" }
+
+	publishDir Paths.get( params.out_dir ),
+		mode: "copy",
+		overwrite: "true"
 
 	input:
 		tuple val(name), path(pdfs)
@@ -18,11 +22,13 @@ process merge_plots {
 		"""
 }
 
-process rename_coords {
+process reformat_coords {
 
-	label "export"
-	
 	tag { "${name}" }
+
+	publishDir Paths.get( params.out_dir ),
+		mode: "copy",
+		overwrite: "true"
 
 	input:
 		tuple val(metadata), path(csv)
@@ -34,37 +40,33 @@ process rename_coords {
 		
 		name = metadata["name"]
 
+		// The header is this one:
+		// Process,Sample,SeqBarcode,PuckBarcode,x,y,Distance,Number,Reads
+		// So, we take the 3rd column (SeqBarcode)
+
 		"""
-		cp -v $csv "${name}.csv"
+		cut -d "," -f 3,5,6 $csv > "${name}.csv"
+		sed -i 's/SeqBarcode/Barcode/g' "${name}.csv"
 		"""
 }
 
-process dge {
+process export_metrics {
 
-	label "export"
-	label "sequencing"
-
-	tag { "${name}" }
+	label "python"
+	
+	publishDir Paths.get( params.out_dir ),
+		mode: "copy",
+		overwrite: "true"
 
 	input:
-		tuple val(metadata), path(bam), path(script)
+		path csvs
 
 	output:
-		tuple val(metadata), file("${directory}")
+		file "qc_metrics.csv"
 
 	script:		
-		
-		name = metadata["name"]
-		gtf = metadata["gtf"]
-		directory = "${name}_dge"
-
 		"""
-		./$script --directory . $gtf $bam
-
-		mkdir $directory
-		cat matrix.mtx | gzip -c > $directory/matrix.mtx.gz
-		cat features.tsv | gzip -c > $directory/features.tsv.gz
-		cat barcodes.tsv | gzip -c > $directory/barcodes.tsv.gz
+		cat $csvs > "qc_metrics.csv"
 		"""
 }
 

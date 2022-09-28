@@ -49,19 +49,18 @@ if __name__ == "__main__":
 	shuffled_path = sys.argv[2]
 	base_path = sys.argv[3]
 	
-	columns = {0: "PuckBarcode", 1: "Distance", 2: "Matches", 3: "SeqBarcodes"}
+	names = ["Process", "Sample", "PuckBarcode", "Distance", "Matches",
+		"SeqBarcodes"]
 	
 	ordered = pd\
-		.read_csv(ordered_path, header=None)\
-		.rename(columns=columns)\
+		.read_csv(ordered_path, header=None, names=names)\
 		.Distance\
 		.value_counts()\
 		.to_frame()\
 		.rename(columns={"Distance": "Count"})
 	
 	shuffled = pd\
-		.read_csv(shuffled_path, header=None)\
-		.rename(columns=columns)\
+		.read_csv(shuffled_path, header=None, names=names)\
 		.Distance\
 		.value_counts()\
 		.to_frame()\
