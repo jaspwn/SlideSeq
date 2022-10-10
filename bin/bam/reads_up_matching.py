@@ -36,8 +36,10 @@ def reads_up_matching(bam_path, csv_path):#
 	
 	print("Export results", file=sys.stderr)
 	rows = []
+	#for k, v in counts.items():
+	#	rows.append({"Matched": k[0], "Mapped": k[1], "Reads": v})
 	for k, v in counts.items():
-		rows.append({"Matched": k[0], "Mapped": k[1], "Reads": v})
+		rows.append({"Status": k[0]+"/"+k[1], "Reads": v})
 	df = pd.DataFrame.from_records(rows)
 	df = df.sort_values("Reads", ascending=False)
 	df.to_csv(csv_path, header=False, index=False)

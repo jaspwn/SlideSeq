@@ -1,3 +1,4 @@
+import java.nio.file.Paths
 
 /////////////////////////////////
 def addValue(map, key, value) {//
@@ -37,9 +38,19 @@ def getMinLength(structure) {//
 def getPuckName(puck) {//
 /////////////////////////
 
-	def f = new File(puck)
+	// I don't know if it's a string or a path
+	// Here, it's a sun.nio.fs.UnixPath
+	def f = new File( puck.toString() )
 
 	return f.getName().toString().replaceAll('\\.csv$', '') // single quotes!
 }
 
+/////////////////////////////////
+def convertToAbsolutePath(path)//
+/////////////////////////////////
+{
+	def f = new File(path)
+	def full_path = f.getAbsolutePath() 
+	return Paths.get(full_path)
+}
 

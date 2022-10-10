@@ -11,7 +11,8 @@ include {
 	addValue;
 	removeKeys;
 	getMinLength;
-	getPuckName
+	getPuckName;
+	convertToAbsolutePath
 	} from "./modules/utils.nf"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -217,10 +218,10 @@ Channel
 	.fromPath(params.design)
 	.splitCsv(header: true)
 	.map{ addValue(it, "min_length", getMinLength(it["read_structure"])) }
-	.map{ addValue(it, "puck_path", new File(it["puck"]).getAbsolutePath()) }
+	.map{ addValue(it, "puck_path", convertToAbsolutePath(it["puck"])) }
 	.map{ addValue(it, "puck", getPuckName(it["puck_path"])) }
-	.map{ addValue(it, "fastq_1", new File(it["fastq_1"]).getAbsolutePath()) }
-	.map{ addValue(it, "fastq_2", new File(it["fastq_2"]).getAbsolutePath()) }
+	.map{ addValue(it, "fastq_1", convertToAbsolutePath(it["fastq_1"])) }
+	.map{ addValue(it, "fastq_2", convertToAbsolutePath(it["fastq_2"])) }
 	.set{ FASTQ }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -249,6 +250,7 @@ workflow {
 
 	fastqc(TO_FASTQC)
 
+
 	///////////////////////////////////////////////////////////////////////////
 	// MERGE
 
@@ -262,8 +264,8 @@ workflow {
 		.groupTuple()
 		.map{[
 			it[1][0],
-			it[2].sort{ new File(it).getName() },
-			it[3].sort{ new File(it).getName() }
+			it[2].sort{ it.getName() },
+			it[3].sort{ it.getName() }
 		]}
 		.map{ [ addValue(it[0], "n_fastq_read1", it[1].size()) , *it[1..2] ] }
 		.map{ [ addValue(it[0], "n_fastq_read2", it[2].size()) , *it[1..2] ] }
@@ -716,5 +718,8 @@ workflow {
 
 	// spatial info
 	reformat_coords( matcher.out.coords.filter{ it[0]["barcodes"] == "ordered"} )
+
+	/*
+	// */
 }
 

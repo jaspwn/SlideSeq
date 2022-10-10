@@ -12,19 +12,20 @@ def count_select(bam_path, csv_path):#
 ######################################
 
 	order = {
-		"UNIQUE": 0,
-		"INCLUDED": 1,
-		"EXCLUDED": 2,
-		"UNRESOLVED": 3
+		("UNIQUE", "SAME_GENE"): 0,
+		("INCLUDED", "SAME_GENE"): 1,
+		("EXCLUDED", "SAME_GENE"): 2,
+		("EXCLUDED", "DIFFERENT_GENE"): 3,
+		("UNRESOLVED", "UNRESOLVED"): 4
 	}
-
+	
 	bam = pysam.AlignmentFile(bam_path, "rb")
 	status = defaultdict(set)
 	counter = 0
-
+	
 	print("BAM iteration", file=sys.stderr)
 	for record in bam.fetch(until_eof=True):
-		status[record.query_name].add( record.get_tag("cs") )
+		status[record.query_name].add((record.get_tag("cs"), record.get_tag("sg")))
 		counter = counter + 1
 		if counter % 1000000 == 0:
 			print(counter, file=sys.stderr)
@@ -38,8 +39,11 @@ def count_select(bam_path, csv_path):#
 		.Series(counts)\
 		.reset_index()\
 		.rename(columns={"index": "Status", 0: "Reads"})\
-		.sort_values("Reads", ascending=False)
-
+		.sort_values("Reads", ascending=False)\
+		.rename(columns={"level_0": "Count", "level_1": "Gene"})\
+		.assign(Status=lambda x: x.Count + "/" + x.Gene)\
+		.loc[:,["Status", "Reads"]]
+	
 	print("Export results", file=sys.stderr)
 	df.to_csv(csv_path, header=False, index=False)
 	############################################################################

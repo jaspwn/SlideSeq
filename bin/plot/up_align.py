@@ -86,8 +86,17 @@ if __name__ == "__main__":
 	csv_path = sys.argv[1]
 	base_path = sys.argv[2]
 
-	names = ["Process", "Sample", "Matched", "Mapped", "Reads"]
+	names = ["Process", "Sample", "Status", "Reads"]
 	df = pd.read_csv(csv_path, header=None, names=names)
+
+	# split read status in two columns
+	df = df\
+		.join(
+			df.Status.str.split("/")\
+				.apply(pd.Series)\
+				.rename(columns={0:"Matched", 1:"Mapped"})
+		)\
+		.loc[:,["Process", "Sample", "Matched", "Mapped", "Reads"]]
 
 	# reindex
 	index = [
