@@ -12,7 +12,7 @@ include {
 	removeKeys;
 	getMinLength;
 	getPuckName;
-	convertToAbsolutePath
+	getDataPaths
 	} from "./modules/utils.nf"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -217,11 +217,9 @@ include { export_metrics } from "./modules/process/export"
 Channel
 	.fromPath(params.design)
 	.splitCsv(header: true)
+	.map{getDataPaths(it, workflow.projectDir.toString())}
 	.map{ addValue(it, "min_length", getMinLength(it["read_structure"])) }
-	.map{ addValue(it, "puck_path", convertToAbsolutePath(it["puck"])) }
-	.map{ addValue(it, "puck", getPuckName(it["puck_path"])) }
-	.map{ addValue(it, "fastq_1", convertToAbsolutePath(it["fastq_1"])) }
-	.map{ addValue(it, "fastq_2", convertToAbsolutePath(it["fastq_2"])) }
+	.map{ addValue(it, "puck", getPuckName(it)) }
 	.set{ FASTQ }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -718,8 +716,5 @@ workflow {
 
 	// spatial info
 	reformat_coords( matcher.out.coords.filter{ it[0]["barcodes"] == "ordered"} )
-
-	/*
-	// */
 }
 

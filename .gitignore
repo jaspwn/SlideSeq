@@ -2,6 +2,7 @@
 *.swp
 *.tar
 .nextflow*
+bahn-slideseq-*
 data
 nextflow*
 pucks
