@@ -30,36 +30,6 @@ process bam_tag {
 		"""
 }
 
-process bam_tag_hmem {
-
-	label "slideseq_tools"
-	
-	tag { "${basename}" }
-
-	publishDir Paths.get( params.out_dir , "temp_files" ),
-		mode: "copy",
-		overwrite: "true",
-		saveAs: { filename -> "${name}/05_add_bam_tags/${filename}" }
-
-	input:
-		tuple val(metadata), path(bam), val(suffix)
-
-	output:
-		tuple val(metadata), path("${basename}.bam"), path("${basename}.bam.bai")
-
-	script:		
-		
-		name = metadata["name"]
-		basename = "${name}.${suffix}"
-
-
-		"""
-		bam_tag $bam "${basename}.bam"
-		echo "Indexing..."
-		samtools index "${basename}.bam"
-		"""
-}
-
 process bam_metrics {
 
 	label "python"
