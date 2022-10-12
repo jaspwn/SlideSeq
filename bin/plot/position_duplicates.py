@@ -70,8 +70,13 @@ if __name__ == "__main__":
 	values = values.loc[["Non duplicates", "Duplicates"]].reset_index()
 	status = ["Non duplicates", "Duplicates"]
 	values["Status"] = pd.Categorical(values.Status, categories=status)
+
+	# title
+	total = "{:,}".format( values.Reads.sum() )
+	title = f"Position duplicates ({total} reads in total)"
+	title += "\n(same UMI and same mapping)"
 	
-	plt = count_plot(values, "Position duplicates\n(same UMI and same mapping)")
+	plt = count_plot(values, title)
 	plt.savefig(f"{base_path}.png")
 	plt.savefig(f"{base_path}.pdf")
 

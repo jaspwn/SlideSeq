@@ -13,14 +13,12 @@ mpl.rc('font', size=16)
 #########################
 def extraction_plot(df):#
 #########################
-	"""Plots the number of total reads, too short reads and usable reads. The
-	argument data frame should have at least 2 columns named "Length" and
-	"Reads". The "Length column has to contain an entry named "Total". The
+	"""Plots the number of too short reads and usable reads. The argument data
+	frame should have at least 2 columns named "Length" and "Reads". The
 	function returns the modified data frame and a Figure object."""
 
 	# Percentage of total reads
-	total = df.Reads.loc[ df.Length == "Total" ].iloc[0]
-	df["Percent"] = df.Reads / total * 100
+	df["Percent"] = df.Reads / df.Reads.sum() * 100
 
 	# annotation
 	num = df.Reads.apply(lambda x: "{:,}".format(x)).astype(str)
@@ -52,7 +50,9 @@ def extraction_plot(df):#
 
 	ax.set_ylim(0, df.Reads.max() + df.Reads.max()/10)
 	ax.ticklabel_format(axis="y", style="sci")
-	ax.set_title("Barcodes extraction")
+
+	total = "{:,}".format(df.Reads.sum())
+	ax.set_title(f"Barcode extraction\n({total} reads in total)")
 	
 	fig.tight_layout()
 
@@ -80,11 +80,13 @@ if __name__ == "__main__":
 		"UP primer match",
 		"UP primer non match"
 		]
+
 	df = df.set_index("Length")
 	df = df.reindex(index, fill_value=0)
 	df = df.reset_index()
 
 	df = df.filter(["Length", "Reads"])
+
 	df["Length"] = df\
 		.Length\
 		.replace({
@@ -92,11 +94,10 @@ if __name__ == "__main__":
 			"Too short reads": f"Less than\n{threshold} bp",
 			"Long enough reads": f"At least\n{threshold} bp"
 		})
+
 	df = df\
 		.set_index("Length")\
-		.loc[
-			["Total", f"Less than\n{threshold} bp", f"At least\n{threshold} bp"]
-		]\
+		.loc[ [f"Less than\n{threshold} bp", f"At least\n{threshold} bp"] ]\
 		.reset_index()
 	
 	ddf, plt = extraction_plot(df)

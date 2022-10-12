@@ -690,7 +690,7 @@ workflow {
 	plot_barcode_extraction.out.pdf
 		.concat(
 			plot_pcr_duplicates.out.pdf,
-			plot_up_matching.out.pdf,
+			//plot_up_matching.out.pdf,
 			plot_up_align.out.pdf,
 			plot_umi_threshold.out.pdf,
 			plot_barcode_align.out.pdf,

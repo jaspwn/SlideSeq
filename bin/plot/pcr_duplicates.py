@@ -71,7 +71,12 @@ if __name__ == "__main__":
 	status = ["Non duplicates", "Duplicates"]
 	values["Status"] = pd.Categorical(values.Status, categories=status)
 	
-	plt = count_plot(values, "PCR duplicates\n(same UMI and same read 2 sequence)")
+	# title
+	total = "{:,}".format( values.Reads.sum() )
+	title = f"PCR duplicates ({total} reads in total)"
+	title += "\n(same UMI and same read 2 sequence)"
+	
+	plt = count_plot(values, title)
 	plt.savefig(f"{base_path}.png")
 	plt.savefig(f"{base_path}.pdf")
 
