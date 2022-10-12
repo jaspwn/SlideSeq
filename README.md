@@ -15,13 +15,28 @@ Here is the documentation:
  3. [Running the pipeline](doc/run.md)
  4. [Pipeline output](doc/output.md)
 
-In a nutshell, if you're from the Crick and want to test it, just `ssh` to CAMP and do:
 
+In a nutshell, first be sure that your singularity config directory is not in your home.
+For example:
+
+```bash
+$ ls -l ~/.singularity
+lrwxrwxrwx 1 username domain users 40 Aug 26  2021 /camp/home/username/.singularity -> /camp/stp/babs/working/username/.singularity
 ```
-git clone https://github.com/bahnk/SlideSeq
-cd SlideSeq
-sh run
+
+Then, you can just run:
+
+```bash
+# load nextflow and singularity
+module load Nextflow/22.04.0 Singularity/3.6.4
+
+# pull the latest version
+nextflow pull bahnk/SlideSeq -r main
+
+# run the pipeline and pray
+nextflow run bahnk/SlideSeq -r main -params-file params.yml --sample_sheet /path/to/samplesheet --data_dir /path/to/sequencingdirectory
 ```
+
 If it fails it's probably because your `MODULEPATH` is missing some locations, and/or because you don't have access to the BABS reference area (`/camp/svc/reference/Genomics/babs`).
 
 Any issues => `nourdine.bah@crick.ac.uk`. Cheers,
