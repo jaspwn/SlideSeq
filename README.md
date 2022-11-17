@@ -33,8 +33,12 @@ module load Nextflow/22.04.0 Singularity/3.6.4
 # pull the latest version
 nextflow pull bahnk/SlideSeq -r main
 
+# download example files
+wget https://raw.githubusercontent.com/bahnk/SlideSeq/main/test/design.csv
+wget https://raw.githubusercontent.com/bahnk/SlideSeq/main/params.yml
+
 # run the pipeline and pray
-nextflow run bahnk/SlideSeq -r main -params-file params.yml --sample_sheet /path/to/samplesheet --data_dir /path/to/sequencingdirectory
+nextflow run bahnk/SlideSeq -r main -params-file params.yml --design design.csv
 ```
 
 If it fails it's probably because your `MODULEPATH` is missing some locations, and/or because you don't have access to the BABS reference area (`/camp/svc/reference/Genomics/babs`).

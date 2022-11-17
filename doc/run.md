@@ -6,5 +6,5 @@ If you're from the Crick, just `ssh` to CAMP, then configure your `params.yml` f
 ```
 module load Nextflow/22.04.0 Singularity/3.6.4
 nextflow pull bahnk/SlideSeq -r main
-nextflow run bahnk/SlideSeq -r main -params-file params.yml --sample_sheet design.csv
+nextflow run bahnk/SlideSeq -r main -params-file params.yml --design design.csv
 ```
