@@ -72,10 +72,10 @@ adata.obs = spatial.loc[ adata.obs.index ]
 ## QC metrics
 
  1. [First step: checking for barcode length (page 1)](#first-step-checking-for-barcode-length-page-1)
- 2. [Second step: remove PCR duplicates (page 2)](#remove-pcr-duplicates-page-2)
+ 2. [Second step: remove PCR duplicates (page 2)](#second-step-remove-pcr-duplicates-page-2)
  3. [Third step: mapping read 2 on the genome (page 3)](#third-step-mapping-read-2-on-the-genome-page-3)
  4. [Fourth step: filtering the barcodes with too few UMIs (page 4)](#fourth-step-filtering-the-barcodes-with-too-few-umis-page-4)
- 5. [Fifth step: barcode matching (pages 5, 13, 14, and 15)](#fifth-step-barcode-matching-pages-5-13-14-and-15)
+ 5. [Fifth step: barcode matching (pages 5, 14, 15, and 16)](#fifth-step-barcode-matching-pages-5-13-14-and-15)
  6. [Sixth step: gene annotation of reads 2 (page 6)](#sixth-step-gene-annotation-of-reads-2-page-6)
  7. [Seventh step: remove-position-duplicates (page 7)](#seventh-step-remove-position-duplicates-page-7)
  8. [Eighth step: deduplication (page 8)](#eighth-step-deduplication-page-8)
@@ -127,6 +127,7 @@ Here (page 14) we can see that the sequencing data contained 93,357 bead barcode
 Among all the sequencing barcodes, we were able to associate 53,041 of them to a puck barcode.
 
 ![Page 14](example_output/pages/page-14.png)
+
 On the following picture (page 5), we can see that among the 30,977,724 reads pairs that are UP-matched, genome-mapped and have more than 10 UMIs, there are 25,315,397 reads whose the barcode could be associated with a puck barcode.
 
 ![Page 5](example_output/pages/page-05.png)
@@ -139,7 +140,7 @@ This can highlight mistakes in the read structure specification, or reveal unsuc
 
 A successful barcode matching can be revealed by comparing it with its counterpart performed with shuffled sequences.
 This histogram shows, for each sequencing barcode, the smallest Hamming distance found among the puck barcodes.
-In red is the case where we shuffled the puck barcodes sequences, and in blue is where we left the sequences unchaged.
+In red is the case where we shuffled the puck barcodes sequences, and in blue is where we left the sequences unchanged.
 
 ![Page 15](example_output/pages/page-16.png)
 

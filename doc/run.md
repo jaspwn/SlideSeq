@@ -1,18 +1,10 @@
 
 # Running the pipeline
 
-If you're from the Crick, just `ssh` to CAMP, then run
+If you're from the Crick, just `ssh` to CAMP, then configure your `params.yml` file and `design.csv` file as detailed [here](doc/config.md), and finally run:
 
 ```
-git clone https://github.com/bahnk/SlideSeq
-cd SlideSeq
+module load Nextflow/22.04.0 Singularity/3.6.4
+nextflow pull bahnk/SlideSeq -r main
+nextflow run bahnk/SlideSeq -r main -params-file params.yml --sample_sheet design.csv
 ```
-
-Configure your `params.yml` file and `design.csv` file and then run:
-
-```
-module load Nextflow/20.12.0-edge Singularity/3.6.4
-export NXF_SINGULARITY_CACHEDIR=$WORK/singularity
-nextflow run main.nf -params-file params.yml
-```
-
