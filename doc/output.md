@@ -6,33 +6,34 @@ For example, here we have two samples (`sample1` and `sample2`):
 
 ```
 $ ls results 
-files  qc  sample1.csv  sample1_dge  sample1.pdf  sample2.csv  sample2_dge  sample2.pdf
+qc_metrics.csv  sample1  sample1.csv  sample1.pdf  sample2  sample2.csv  sample2.pdf  temp_files
 ```
 
-The `files` and `qc` directories contain intermediate files and raw QC metrics respectively.
-So, they can be both deleted.
+The `temp_files` directory contains intermediate files and raw QC metrics.
+So, it can be deleted.
 
 You are interested in the following files:
 
  * `sample1.pdf`: the QC plots
- * `sample1_dge`: the digital expression matrix
+ * `sample1`: the digital expression matrix
  * `sample1.csv`: the beads coordinates
+ * `qc_metrics.csv`: QC metrics for all the samples (see details [here](#qc-metrics))
 
 ## Digital matrix expression and bead coordinates
 
 
-The `sample1.csv` file contains the barcodes coordinates and the `sample1_dge` contains the count matrix files.
+The `sample1.csv` file contains the barcodes coordinates and the `sample1` directory contains the count matrix files.
 
 ```
-$ tree results/sample1.csv results/sample1_dge
+$ tree results/sample1.csv results/sample1
 results/sample1.csv [error opening dir]
-results/sample1_dge
+results/sample1
 ├── barcodes.tsv.gz
 ├── features.tsv.gz
 └── matrix.mtx.gz
 ```
 
-We can import the count matrix and the coordinates in R this way:
+We can import the count matrix and the coordinates in R this way for example:
 
 ```
 library(Seurat)
@@ -40,15 +41,20 @@ library(dplyr)
 library(readr)
 library(tibble)
 
-counts <- Seurat::Read10X("imran_puck_15_humangbm_dge")
+# digital expression matrix
+counts <- Seurat::Read10X("results/sample1")
 
-df <-
-	readr::read_csv("imran_puck_15_humangbm.csv") %>%
-	dplyr::mutate(Barcode=paste0(Barcode, "-1")) %>%
+# spatial information
+spatial <-
+	readr::read_csv("results/sample1.csv") %>%
+	dplyr::filter( Barcode %in% colnames(counts) ) %>%
+	dplyr::arrange(Barcode) %>%
 	tibble::column_to_rownames("Barcode")
 
-md = df[colnames(counts),]
-obj <- Seurat::CreateSeuratObject(counts=counts, meta.data=md, assay="Spatial")
+stopifnot( sum( ! spatial$Barcode == colnames(counts) ) == 0 )
+
+args <- list("project"="sample1", "assay"="Spatial", "meta.data"=spatial)
+obj <- do.call(SeuratObject::CreateSeuratObject, c(counts, args))
 ```
 
 If you use python:
@@ -57,27 +63,25 @@ If you use python:
 import panda as pd
 import scanpy as sc
 
-coords = pd\
-	.read_csv("results/sample1.csv")\
-	.rename(columns={"PuckBarcode": "Barcode"})\
-	.set_index("SeqBarcode")
+spatial = pd.read_csv("results/sample1.csv").set_index("Barcode")
 
-adata = sc.read_10x_mtx("results/sample1_dge")
-adata.obs = coords.loc[ adata.obs.index ]
+adata = sc.read_10x_mtx("results/sample1")
+adata.obs = spatial.loc[ adata.obs.index ]
 ```
 
 ## QC metrics
 
  1. [First step: checking for barcode length (page 1)](#first-step-checking-for-barcode-length-page-1)
- 2. [Second step: matching UP primer (page 2)](#second-step-matching-up-primer-page-2)
+ 2. [Second step: remove PCR duplicates (page 2)](#remove-pcr-duplicates-page-2)
  3. [Third step: mapping read 2 on the genome (page 3)](#third-step-mapping-read-2-on-the-genome-page-3)
  4. [Fourth step: filtering the barcodes with too few UMIs (page 4)](#fourth-step-filtering-the-barcodes-with-too-few-umis-page-4)
  5. [Fifth step: barcode matching (pages 5, 13, 14, and 15)](#fifth-step-barcode-matching-pages-5-13-14-and-15)
  6. [Sixth step: gene annotation of reads 2 (page 6)](#sixth-step-gene-annotation-of-reads-2-page-6)
- 7. [Seventh step: deduplication (page 7)](#seventh-step-deduplication-page-7)
- 8. [Checking the read structure specification (pages 8 and 9)](#checking-the-read-structure-specification-pages-8-and-9)
- 9. [Library complexity (pages 10, 11, 12 and 16)](#library-complexity-pages-10-11-12-and-16)
- 10. [Looking for histological structures](#looking-for-histological-structures)
+ 7. [Seventh step: remove-position-duplicates (page 7)](#seventh-step-remove-position-duplicates-page-7)
+ 8. [Eighth step: deduplication (page 8)](#eighth-step-deduplication-page-8)
+ 8. [Checking the read structure specification (pages 9 and 10)](#checking-the-read-structure-specification-pages-9-and-10)
+ 9. [Library complexity (pages 11, 12, 13 and 17)](#library-complexity-pages-11-12-13-and-17)
+ 10. [Looking for histological structures (page 18)](#looking-for-histological-structures-page-18)
 
 ### First step: checking for barcode length (page 1)
 
@@ -87,18 +91,23 @@ On the following picture, there are 68,647,673 reads in total and all of them ar
 
 ![Page 1](example_output/pages/page-01.png)
 
-### Second step: matching UP primer (page 2)
+### Second step: remove PCR duplicates (page 2)
 
-The second step is to match the UP primer sequence on read 1 (among those that are long enough).
-You can allow a certain tolerance in the matching by setting the maximum Hamming distance (usually 3 or 4).
-On the following picture, there 52,055,737 reads that match the UP primer (among the 68,647,673 read pairs that are long enough).
+The second step is to extract bead barcode, UMI and UP primer sequence from read 1.
+Then, we remove the duplicates that have same bead barcode, same UMI and same read 2 sequence.
+We named these duplicates PCR duplicates, but maybe it is not *stricto sensu* the proper definition.
+Anyway.
+On the following picture, there are 11,460,743 reads that are considered as duplicates (among the 68,647,673 read pairs that are long enough).
 
 ![Page 2](example_output/pages/page-02.png)
 
 ### Third step: mapping read 2 on the genome (page 3)
 
-The third step is to map read 2 on the genome.
-For example, here we can see that among the 52,055,737 reads pairs that match the UP primer 40,420,278 of them can be mapped on the genome.
+We need match the UP primer sequence on read 1.
+You can allow a certain tolerance in the matching by setting the maximum Hamming distance (usually 3 or 4).
+On the following picture, there 52,055,737 (11,021,881+34,897,847) reads that match the UP primer (among the 68,647,673 read pairs that are long enough).
+
+Then, we map read 2 on the genome and there are 34,897,847 reads that map the genome and have an acceptable UP primer sequence.
 
 ![Page 3](example_output/pages/page-03.png)
 
@@ -110,15 +119,15 @@ Here, we kept everything for example.
 
 ![Page 4](example_output/pages/page-04.png)
 
-### Fifth step: barcode matching (pages 5, 13, 14, and 15)
+### Fifth step: barcode matching (pages 5, 14, 15, and 16)
 
 The fifth step is to match the sequencing barcodes with the puck barcodes (among the reads pairs that match the UP primer and can be mapped on the genome).
 
-Here (page 13) we can see that the sequencing data contained 2,572,149 bead barcodes and the puck contained 77,938 bead barcodes.
-Among all the sequencing barcodes, we were able to associate 58,725 of them to a puck barcode.
+Here (page 14) we can see that the sequencing data contained 93,357 bead barcodes and the puck contained 77,938 bead barcodes.
+Among all the sequencing barcodes, we were able to associate 53,041 of them to a puck barcode.
 
-![Page 13](example_output/pages/page-13.png)
-On the following picture (page 5), we can see that among the 40,420,278 reads pairs that are UP-matched and genome-mapped there are 29,815,832 reads whose the barcode could be associated with a puck barcode.
+![Page 14](example_output/pages/page-14.png)
+On the following picture (page 5), we can see that among the 30,977,724 reads pairs that are UP-matched, genome-mapped and have more than 10 UMIs, there are 25,315,397 reads whose the barcode could be associated with a puck barcode.
 
 ![Page 5](example_output/pages/page-05.png)
 
@@ -126,13 +135,13 @@ During the barcode matching, we allow mismatches by using the Hamming distance.
 The following histogram shows the location of these mismatches in the barcode sequence.
 This can highlight mistakes in the read structure specification, or reveal unsucessful ligations during the base call.
 
-![Page 14](example_output/pages/page-14.png)
+![Page 15](example_output/pages/page-15.png)
 
 A successful barcode matching can be revealed by comparing it with its counterpart performed with shuffled sequences.
 This histogram shows, for each sequencing barcode, the smallest Hamming distance found among the puck barcodes.
 In red is the case where we shuffled the puck barcodes sequences, and in blue is where we left the sequences unchaged.
 
-![Page 15](example_output/pages/page-15.png)
+![Page 15](example_output/pages/page-16.png)
 
 ### Sixth step: gene annotation of reads 2 (page 6)
 
@@ -143,7 +152,17 @@ Here, we plot the reads for which HTSeq was successful.
 
 ![Page 6](example_output/pages/page-06.png)
 
-### Seventh step: deduplication (page 7)
+### Seventh step: remove position duplicates (page 7)
+
+We remove the duplicated reads that have same bead barcode and UMI and same mapping position on the genome.
+We called these duplicates position duplicates even if we are not sure they should be name as such (tagmentation duplicates?).
+These duplicates are removed because they map the same gene.
+
+We can see that among the 16,064,290 reads that map an annotated gene, there are 14,596,571 reads than we can use to generate a digital expression matrix.
+
+![Page 7](example_output/pages/page-07.png)
+
+### Eighth step: deduplication (page 8)
 
 The deduplication step is to pick one read when a (barcode,UMI) pair is associated with multiple reads.
 In our case we want to have unique (barcode,UMI,gene) tuples in order to produce the count matrix.
@@ -151,15 +170,17 @@ In our case we want to have unique (barcode,UMI,gene) tuples in order to produce
 The `unique` column is when there is a unique (barcode,UMI,gene) tuple.
 In this case, we don't need to do anything and we can just pick this tuple.
 
-The `Included` and `Excluded` correspond to the case where there are multiple (barcode,UMI,gene) tuples, but one of these mappings has an alignmnent score that stands out.
+The `Included` and `Excluded` correspond to the case where there are multiple (barcode,UMI,gene) tuples, but one of these tuples has more mappings than the others.
 For example:
 
- * (`ACGTACTTCATGCA`,`TGCAACGT`,GeneA,54)
- * (`ACGTACTTCATGCA`,`TGCAACGT`,GeneB,54)
+ * (`ACGTACTTCATGCA`,`TGCAACGT`,GeneA,14)
+ * (`ACGTACTTCATGCA`,`TGCAACGT`,GeneB,12)
  * (`ACGTACTTCATGCA`,`TGCAACGT`,GeneB,61)
- * (`ACGTACTTCATGCA`,`TGCAACGT`,GeneC,49)
+ * (`ACGTACTTCATGCA`,`TGCAACGT`,GeneC,21)
 
-In this situation, we can include the third (`Included`) and exclude the others (`Excluded`).
+Here, the third tuple has `61` mappings at different positions for `GeneB`, while the others have `21` mappings at the most.
+In this situation, we choose the majority vote and include the third (`Included`) while excluding the others (`Excluded`).
+We also make the distinction between the second one (`Excluded Same gene`) and the first and the fourth `Excluded Different gene`).
 
 The `Unresolved` column is the case where there are multiple (barcode,UMI,gene) tuples, but none of them stands out.
 For example:
@@ -170,9 +191,9 @@ For example:
 
 In this situation we throw everything.
 
-![Page 7](example_output/pages/page-07.png)
+![Page 8](example_output/pages/page-08.png)
 
-### Checking the read structure specification (pages 8 and 9)
+### Checking the read structure specification (pages 9 and 10)
 
 Barcodes and UMIs are generated randomly.
 So, we should get ~25 % of all bases at each position.
@@ -181,13 +202,13 @@ Therefore, we plot the bases frequencies in order to spot possible mistakes in t
 
 For the barcodes:
 
-![Page 8](example_output/pages/page-08.png)
+![Page 9](example_output/pages/page-09.png)
 
 For the UMIs:
 
-![Page 9](example_output/pages/page-09.png)
+![Page 10](example_output/pages/page-10.png)
 
-### Library complexity (pages 10, 11, 12 and 16)
+### Library complexity (pages 11, 12, 13 and 17)
 
 There are numerous ways to assess library complexity.
 Here are some metrics that we use.
@@ -195,23 +216,23 @@ Here are some metrics that we use.
 The saturation of the total reads by the TOP 10 % barcodes with the highest number of UMIs (page 10).
 <span style="color:green">This plot is probably poorly made in the pipeline. It needs to be recoded.</span>
 
-![Page 10](example_output/pages/page-10.png)
+![Page 10](example_output/pages/page-11.png)
 
-The average number of UMIs per barcode for all the barcodes and for the TOP 10 % barcodes with the highest number of UMIs (page 16).
+The average number of UMIs per barcode for all the barcodes and for the TOP 10 % barcodes with the highest number of UMIs (page 17).
 
-![Page 16](example_output/pages/page-16.png)
+![Page 16](example_output/pages/page-17.png)
 
-Histogram of the number of UMIs per barcode (page 11).
-
-![Page 11](example_output/pages/page-11.png)
-
-Histogram of the number of genes per barcode (page 11).
+Histogram of the number of UMIs per barcode (page 12).
 
 ![Page 12](example_output/pages/page-12.png)
 
-### Looking for histological structures
+Histogram of the number of genes per barcode (page 13).
+
+![Page 13](example_output/pages/page-13.png)
+
+### Looking for histological structures (page 18)
 
 The best way to see if the pipeline was successul is to plot the number of UMIs per bead on the XY plane and search for known histological structures.
 
-![Page 17](example_output/pages/page-17.png)
+![Page 18](example_output/pages/page-18.png)
 
