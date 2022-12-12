@@ -29,6 +29,7 @@ process star {
 			--runMode alignReads \
 			--runThreadN $task.cpus \
 			--outSAMtype BAM SortedByCoordinate \
+			--limitBAMsortRAM 10000000000 \
 			--outSAMunmapped Within \
 			--outSAMattributes NH HI AS nM NM MD \
 			--genomeDir $index \
