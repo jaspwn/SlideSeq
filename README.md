@@ -45,3 +45,8 @@ If it fails it's probably because your `MODULEPATH` is missing some locations, a
 
 Any issues => `nourdine.bah@crick.ac.uk`. Cheers,
 
+## Comments
+
+The decision was made not to perform deduplication with UMI-tools for now.
+Maybe this feature will be added later.
+
