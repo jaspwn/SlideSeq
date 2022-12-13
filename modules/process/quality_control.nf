@@ -52,6 +52,7 @@ process mark_duplicates {
 
 		"""
 		picard-tools \
+			-Xmx200G \
 			MarkDuplicates \
 				I=$bam \
 				O=${name}.dup.bam \
