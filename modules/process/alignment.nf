@@ -31,7 +31,7 @@ process star {
 			--outSAMtype BAM SortedByCoordinate \
 			--limitBAMsortRAM 10000000000 \
 			--outSAMunmapped Within \
-			--outSAMattributes NH HI AS nM NM MD \
+			--outSAMattributes NH HI AS nM NM \
 			--genomeDir $index \
 			--outFileNamePrefix "${name}." \
 			--readFilesCommand zcat \
