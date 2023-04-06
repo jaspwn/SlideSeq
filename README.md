@@ -43,7 +43,7 @@ nextflow run bahnk/SlideSeq -r main -params-file params.yml --design design.csv
 
 If it fails it's probably because your `MODULEPATH` is missing some locations, and/or because you don't have access to the BABS reference area (`/camp/svc/reference/Genomics/babs`).
 
-Any issues => `nourdine.bah@crick.ac.uk`. Cheers,
+Any issues => `nourdinebah@gmail.com`. Cheers,
 
 ## Comments
 
