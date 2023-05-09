@@ -51,7 +51,7 @@ cd -
 ## Wrong puck
 
 If the pipeline matches too few bead barcodes sometimes it is because user specified the wrong puck.
-In order to check that the right puck was specified, user can have a look at the [QC histogram  (page 15 of the report)](doc/output.md).
+In order to check that the right puck was specified, user can have a look at the [QC histogram  (page 15 of the report)](output.md#fifth-step-barcode-matching-pages-5-13-14-and-15).
 
 ## Exotic GTF file
 
