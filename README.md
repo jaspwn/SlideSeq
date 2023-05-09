@@ -14,6 +14,7 @@ Here is the documentation:
  2. [Pipeline configuration](doc/config.md)
  3. [Running the pipeline](doc/run.md)
  4. [Pipeline output](doc/output.md)
+ 5. [Troubleshooting](doc/troubleshooting.md)
 
 
 In a nutshell, first be sure that your singularity config directory is not in your home.
@@ -43,10 +44,26 @@ nextflow run bahnk/SlideSeq -r main -params-file params.yml --design design.csv
 
 If it fails it's probably because your `MODULEPATH` is missing some locations, and/or because you don't have access to the BABS reference area (`/camp/svc/reference/Genomics/babs`).
 
+If you're on NEMO, you need to create a configuration file named `singularity.config`with the following content:
+
+```
+singularity {
+	enabled = true
+	runOptions = "-B /nemo --nv"
+}
+```
+
+Then, pass this configuration file to nextflow when you run the pipeline:
+
+```
+nextflow -c singularity.config run bahnk/SlideSeq -r main -params-file params.yml --design design.csv
+```
+
 Any issues => `nourdinebah@gmail.com`. Cheers,
 
 ## Comments
 
 The decision was made not to perform deduplication with UMI-tools for now.
 Maybe this feature will be added later.
+If necessary, UMI-tools can be run afterwards anyway.
 
