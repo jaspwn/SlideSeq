@@ -75,7 +75,7 @@ adata.obs = spatial.loc[ adata.obs.index ]
  2. [Second step: remove PCR duplicates (page 2)](#second-step-remove-pcr-duplicates-page-2)
  3. [Third step: mapping read 2 on the genome (page 3)](#third-step-mapping-read-2-on-the-genome-page-3)
  4. [Fourth step: filtering the barcodes with too few UMIs (page 4)](#fourth-step-filtering-the-barcodes-with-too-few-umis-page-4)
- 5. [Fifth step: barcode matching (pages 5, 14, 15, and 16)](#fifth-step-barcode-matching-pages-5-13-14-and-15)
+ 5. [Fifth step: barcode matching (pages 5, 14, 15, and 16)](#fifth-step-barcode-matching-pages-5-14-15-and-16)
  6. [Sixth step: gene annotation of reads 2 (page 6)](#sixth-step-gene-annotation-of-reads-2-page-6)
  7. [Seventh step: remove-position-duplicates (page 7)](#seventh-step-remove-position-duplicates-page-7)
  8. [Eighth step: deduplication (page 8)](#eighth-step-deduplication-page-8)
